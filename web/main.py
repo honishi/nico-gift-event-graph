@@ -9,6 +9,7 @@ import mysql.connector
 from flask import render_template, Flask
 
 # https://www.heavy.ai/blog/12-color-palettes-for-telling-better-stories-with-your-data
+
 CHART_COLORS = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
 
 app = Flask(__name__)
@@ -84,7 +85,25 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
     )
     cursor = connection.cursor()
 
-    # latest timestamp
+    # Query database.
+    latest_timestamp = query_latest_timestamp(cursor, setting)
+    labels = make_x_labels(cursor, setting)
+    top_users = query_top_users(cursor, setting, latest_timestamp)
+    history = query_score_history(cursor, setting, top_users)
+
+    # Make data.
+    users = []
+    for index, (name, scores) in enumerate(history):
+        user = RankUser(
+            f"{index + 1}. {name}",
+            list(reversed(scores)),
+            CHART_COLORS[index % len(CHART_COLORS)]
+        )
+        users.append(user)
+    return RankingData(labels, users)
+
+
+def query_latest_timestamp(cursor, setting: EventSetting) -> int:
     sql = f"""
     select max(timestamp) 
     from ranking 
@@ -92,9 +111,10 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
     """
     cursor.execute(sql)
     row = cursor.fetchone()
-    latest_timestamp = row[0]
+    return row[0]
 
-    # timestamps
+
+def make_x_labels(cursor, setting: EventSetting) -> List[str]:
     sql = f"""
     select distinct timestamp 
     from ranking 
@@ -115,8 +135,10 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
         labels.append(time if last_date == date else " ".join([date, time]))
         last_date = date
     print(labels)
+    return labels
 
-    # top n user at lates timestamp
+
+def query_top_users(cursor, setting: EventSetting, latest_timestamp: int) -> List[str]:
     sql = f"""
     select item_id, name
     from ranking
@@ -130,10 +152,12 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
     for row in rows:
         top_users.append(row)
     print(top_users)
+    return top_users
 
-    # each user's score history
+
+def query_score_history(cursor, setting: EventSetting, user_ids: List[str]) -> List:
     history = []
-    for user_id, name in top_users:
+    for user_id, name in user_ids:
         sql = f"""
         select total_score 
         from ranking 
@@ -149,17 +173,7 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
         print(user_id, name)
         print(scores)
         history.append((name, scores))
-
-    # make data
-    users = []
-    for index, (name, scores) in enumerate(history):
-        user = RankUser(
-            f"{index + 1}. {name}",
-            list(reversed(scores)),
-            CHART_COLORS[index % len(CHART_COLORS)]
-        )
-        users.append(user)
-    return RankingData(labels, users)
+    return history
 
 
 if __name__ == "__main__":
