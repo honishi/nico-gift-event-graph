@@ -125,7 +125,7 @@ def make_x_labels(cursor, setting: EventSetting) -> List[str]:
     cursor.execute(sql)
     rows = cursor.fetchall()
     labels = []
-    last_date = ''
+    # last_date = ''
     for index, row in enumerate(rows):
         # if index % 2 != 0:
         #     labels.append('')
@@ -133,8 +133,9 @@ def make_x_labels(cursor, setting: EventSetting) -> List[str]:
         _datetime = datetime.fromtimestamp(row[0])
         date = _datetime.strftime('%Y/%m/%d')
         time = _datetime.strftime('%H:%M:%S')
-        labels.append(time if last_date == date else " ".join([date, time]))
-        last_date = date
+        labels.append(" ".join([date, time]))
+        # labels.append(time if last_date == date else " ".join([date, time]))
+        # last_date = date
     # print(labels)
     return labels
 
