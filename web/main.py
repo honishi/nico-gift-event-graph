@@ -7,6 +7,7 @@ from typing import List
 
 import mysql.connector
 from flask import render_template, Flask
+from gevent.pywsgi import WSGIServer
 
 # https://www.heavy.ai/blog/12-color-palettes-for-telling-better-stories-with-your-data
 
@@ -57,7 +58,7 @@ class RankingData:
 def top():
     event_setting = read_event_settings()
     data = make_ranking_data(event_setting)
-    print(data)
+    # print(data)
     return render_template('index.html', data=data)
 
 
@@ -134,7 +135,7 @@ def make_x_labels(cursor, setting: EventSetting) -> List[str]:
         time = _datetime.strftime('%H:%M:%S')
         labels.append(time if last_date == date else " ".join([date, time]))
         last_date = date
-    print(labels)
+    # print(labels)
     return labels
 
 
@@ -151,7 +152,7 @@ def query_top_users(cursor, setting: EventSetting, latest_timestamp: int) -> Lis
     top_users = []
     for row in rows:
         top_users.append(row)
-    print(top_users)
+    # print(top_users)
     return top_users
 
 
@@ -170,8 +171,8 @@ def query_score_history(cursor, setting: EventSetting, user_ids: List[str]) -> L
         scores = []
         for row in rows:
             scores.append(row[0])
-        print(user_id, name)
-        print(scores)
+        # print(user_id, name)
+        # print(scores)
         history.append((name, scores))
     return history
 
@@ -180,8 +181,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 3:
         # EXPERIMENTAL: use gevent for slow performance issue with Chrome.
         # https://stackoverflow.com/a/29887309/13220031
-        # http_server = WSGIServer((sys.argv[1], int(sys.argv[2])), app)
-        # http_server.serve_forever()
-        pass
+        http_server = WSGIServer((sys.argv[1], int(sys.argv[2])), app)
+        http_server.serve_forever()
     else:
         app.run(debug=True, threaded=True, port=5001)
