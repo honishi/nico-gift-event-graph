@@ -139,6 +139,7 @@ class NicoGiftEventLoader:
         dynamodb = boto3.resource('dynamodb')
         table = dynamodb.Table('nico-gift-event-graph')
         for entry_item in dic['data']['entry_items']:
+            entry_item['partition_key'] = f"{gift_event_id}_{timestamp}_{entry_item['item_id']}"
             entry_item['gift_event_id'] = gift_event_id
             entry_item['timestamp'] = timestamp
             print(entry_item)
