@@ -4,6 +4,13 @@
 
 * TODO
 
+## cheatsheet
+
+### crontab
+```
+*/10 * * * * /path/to/nico-gift-event-graph/app/run.sh >> /path/to/nico-gift-event-graph/app/log/nico-gift-event-graph.log 2>&1
+```
+
 ## Reference
 
 ### DynamoDB
