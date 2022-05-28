@@ -1,9 +1,10 @@
 body {
-    font-family: Montserrat, sans-serif;
     margin: 5% 10%;
+    color: #252525;
 }
 
 h1 {
+    font-family: Montserrat, sans-serif;
     text-align: center;
 }
 
@@ -11,7 +12,7 @@ a {
     text-decoration: none;
     color: #303030;
     /*font-size: 12px;*/
-    font-weight: 800;
+    /*font-weight: 800;*/
     position: relative;
     -webkit-transition: color ease .2s;
     transition: color ease .2s;

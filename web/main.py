@@ -104,10 +104,16 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
     cursor.execute(sql)
     rows = cursor.fetchall()
     labels = []
-    for row in rows:
-        date = datetime.fromtimestamp(row[0])
-        label = date.strftime('%Y/%m/%d %H:%M:%S')
-        labels.append(label)
+    last_date = ''
+    for index, row in enumerate(rows):
+        # if index % 2 != 0:
+        #     labels.append('')
+        #     continue
+        _datetime = datetime.fromtimestamp(row[0])
+        date = _datetime.strftime('%Y/%m/%d')
+        time = _datetime.strftime('%H:%M:%S')
+        labels.append(time if last_date == date else " ".join([date, time]))
+        last_date = date
     print(labels)
 
     # top n user at lates timestamp
@@ -148,7 +154,7 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
     users = []
     for index, (name, scores) in enumerate(history):
         user = RankUser(
-            name,
+            f"{index + 1}. {name}",
             list(reversed(scores)),
             CHART_COLORS[index % len(CHART_COLORS)]
         )
