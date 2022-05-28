@@ -1,26 +1,42 @@
 # nico-gift-event-graph
 
-## Setup
+## Live Site
 
-* TODO
+* [https://2525ans.com/gift/](https://2525ans.com/gift/)
 
-## cheatsheet
+## Setup 1. Data Downloader
 
-### crontab
+Fetch raw ranking data json and store it to database.
+Configure Python runtime as follows.
+
+```shell
+pyenv install
+pip install -r requirements.txt
+```
+
+Schedule the script using scheduler like cron.
+
 ```
 */10 * * * * /path/to/nico-gift-event-graph/app/run.sh >> /path/to/nico-gift-event-graph/app/log/nico-gift-event-graph.log 2>&1
 ```
 
-## Reference
+## Setup 2. Web Frontend
 
-### DynamoDB
+The chart dataset is dynamically generated from database and visualized by `Chart.js`.
+Web frontend is backed by `Flask`.
 
-<img src="./images/dynamodb-create.png" alt="">
+```shell
+cd web
+./start_production.sh
+# or
+./start_development.sh
+```
+
+## Reference / Cheatsheet
 
 ### AWS IAM Policy
 
 * [Amazon S3: Allows read and write access to objects in an S3 Bucket](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_rw-bucket.html)
-* [Amazon DynamoDB: Allows access to a specific table](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_dynamodb_specific-table.html)
 
 ### Sample JSON
 
