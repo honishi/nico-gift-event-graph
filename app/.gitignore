@@ -1,2 +1,4 @@
 settings.ini
 tmp
+run.env
+*.log
