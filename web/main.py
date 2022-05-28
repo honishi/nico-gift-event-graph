@@ -48,10 +48,12 @@ class RankUser:
 class RankingData:
     labels: List[str]
     top_users: List[RankUser]
+    data_as_of: str
 
-    def __init__(self, labels: List[str], top_users: List[RankUser]):
+    def __init__(self, labels: List[str], top_users: List[RankUser], data_as_of: str):
         self.labels = labels
         self.top_users = top_users
+        self.data_as_of = data_as_of
 
 
 @app.route("/")
@@ -101,7 +103,8 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
             CHART_COLORS[index % len(CHART_COLORS)]
         )
         users.append(user)
-    return RankingData(labels, users)
+    data_as_of = datetime.fromtimestamp(latest_timestamp).strftime('%Y/%m/%d %H:%M:%S')
+    return RankingData(labels, users, data_as_of)
 
 
 def query_latest_timestamp(cursor, setting: EventSetting) -> int:
@@ -146,7 +149,7 @@ def query_top_users(cursor, setting: EventSetting, latest_timestamp: int) -> Lis
     from ranking
     where gift_event_id = '{setting.gift_event_id}' 
     and timestamp = {latest_timestamp} 
-    order by `rank` asc limit 20
+    order by `rank` asc limit 15
     """
     cursor.execute(sql)
     rows = cursor.fetchall()

@@ -4,13 +4,16 @@
     <meta charset="utf-8">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&amp;display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:100,300,400,500,700,900" rel="stylesheet">
-    <title>⛺ GIFT EVENT 2022/06 "Camp" ⛺</title>
+    <title>GIFT EVENT 2022/06 "Camp"</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.8.0/dist/chart.min.js"></script>
     <link rel="stylesheet" type="text/css" href="./static/index.css" media="screen">
 </head>
 <body>
 <h1>⛺ GIFT EVENT 2022/06 "Camp" ⛺️</h1>
-<canvas id="main-chart" width="400" height="200"></canvas>
+<div class="data_as_of_section">
+Data as of: {{ data.data_as_of }}
+</div>
+<canvas id="main-chart"></canvas>
 <script>
     const ctx = document.getElementById('main-chart').getContext('2d')
     const labels = [{% for label in data.labels %}'{{ label }}', {% endfor %}]

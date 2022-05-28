@@ -6,6 +6,12 @@ body {
 h1 {
     font-family: Montserrat, sans-serif;
     text-align: center;
+    font-size: 2.5em;
+}
+
+.data_as_of_section {
+    text-align: center;
+    margin-bottom: 30px;
 }
 
 a {
@@ -19,6 +25,7 @@ a {
 }
 
 .footer_section {
-    margin-top: 2em;
+    margin-top: 30px;
     text-align: center;
+    font-size: 1.2em;
 }
