@@ -7,6 +7,7 @@ import os
 from typing import List, Optional
 
 import boto3
+import mysql.connector
 import requests
 
 TMP_DIR = "./tmp"
@@ -23,9 +24,14 @@ class EventSetting:
     s3_bucket: str
     s3_folder: str
     save_file_prefix: str
+    db_host: str
+    db_port: int
+    db_user: str
+    db_password: str
 
     def __init__(self, setting_name: str, ranking_json_url: str, gift_event_id: str, aws_access_key_id: str,
-                 aws_secret_access_key: str, aws_region: str, s3_bucket: str, s3_folder: str, save_file_prefix: str):
+                 aws_secret_access_key: str, aws_region: str, s3_bucket: str, s3_folder: str, save_file_prefix: str,
+                 db_host: str, db_port: int, db_user: str, db_password: str):
         self.setting_name = setting_name
         self.ranking_json_url = ranking_json_url
         self.gift_event_id = gift_event_id
@@ -35,6 +41,10 @@ class EventSetting:
         self.s3_bucket = s3_bucket
         self.s3_folder = s3_folder
         self.save_file_prefix = save_file_prefix
+        self.db_host = db_host
+        self.db_port = db_port
+        self.db_user = db_user
+        self.db_password = db_password
 
 
 class NicoGiftEventLoader:
@@ -63,25 +73,20 @@ class NicoGiftEventLoader:
             )
 
             # 3. Configure AWS Session
-            NicoGiftEventLoader.set_aws_environmental_values(
-                event_setting.aws_access_key_id,
-                event_setting.aws_secret_access_key,
-                event_setting.aws_region,
-            )
+            NicoGiftEventLoader.set_aws_environmental_values(event_setting)
 
             # 4. Backup Data to S3
             NicoGiftEventLoader.backup_json_to_s3(
                 TMP_DIR,
                 filename,
-                event_setting.s3_bucket,
-                event_setting.s3_folder,
+                event_setting
             )
 
             # 5. Insert Data to DynamoDB
-            NicoGiftEventLoader.upload_to_dynamodb(
+            NicoGiftEventLoader.insert_to_database(
                 text,
-                event_setting.gift_event_id,
                 timestamp,
+                event_setting
             )
 
     @staticmethod
@@ -100,7 +105,11 @@ class NicoGiftEventLoader:
                     config.get(section, "aws_region"),
                     config.get(section, "s3_bucket"),
                     config.get(section, "s3_folder"),
-                    config.get(section, "save_file_prefix")
+                    config.get(section, "save_file_prefix"),
+                    config.get(section, "db_host"),
+                    int(config.get(section, "db_port")),
+                    config.get(section, "db_user"),
+                    config.get(section, "db_password"),
                 )
             )
         return event_settings
@@ -122,30 +131,50 @@ class NicoGiftEventLoader:
         return fullpath
 
     @staticmethod
-    def set_aws_environmental_values(access_key_id: str, secret_access_key: str, region: str):
-        os.environ['AWS_ACCESS_KEY_ID'] = access_key_id
-        os.environ['AWS_SECRET_ACCESS_KEY'] = secret_access_key
-        os.environ['AWS_DEFAULT_REGION'] = region
+    def set_aws_environmental_values(setting: EventSetting):
+        os.environ['AWS_ACCESS_KEY_ID'] = setting.aws_access_key_id
+        os.environ['AWS_SECRET_ACCESS_KEY'] = setting.aws_secret_access_key
+        os.environ['AWS_DEFAULT_REGION'] = setting.aws_region
 
     @staticmethod
-    def backup_json_to_s3(directory: str, filename: str, s3_bucket: str, s3_folder: str):
+    def backup_json_to_s3(directory: str, filename: str, setting: EventSetting):
         s3 = boto3.resource('s3')
-        bucket = s3.Bucket(s3_bucket)
+        bucket = s3.Bucket(setting.s3_bucket)
         local_file = f"{directory}/{filename}"
-        s3_key = f"{s3_folder}/{filename}"
+        s3_key = f"{setting.s3_folder}/{filename}"
         bucket.upload_file(local_file, s3_key)
 
     @staticmethod
-    def upload_to_dynamodb(json_text: str, gift_event_id: str, timestamp: int):
+    def insert_to_database(json_text: str, timestamp: int, setting: EventSetting):
         dic = json.loads(json_text)
-        dynamodb = boto3.resource('dynamodb')
-        table = dynamodb.Table('nico-gift-event-graph')
+        connection = mysql.connector.connect(
+            host=setting.db_host,
+            port=setting.db_port,
+            user=setting.db_user,
+            password=setting.db_password,
+            database='nico_gift_event_graph_db'
+        )
+        cursor = connection.cursor()
+        sql = '''
+        INSERT INTO ranking 
+            (`gift_event_id`, `timestamp`,
+             `id`, `item_type`, `item_id`, `status`, `total_score`, `name`, `thumbnail_url`, `rank`)
+        VALUES 
+            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        '''
+        # print(sql)
+        data = []
         for entry_item in dic['data']['entry_items']:
-            entry_item['partition_key'] = f"{gift_event_id}_{timestamp}_{entry_item['item_id']}"
-            entry_item['gift_event_id'] = gift_event_id
-            entry_item['timestamp'] = timestamp
-            # print(entry_item)
-            table.put_item(Item=entry_item)
+            data.append((
+                setting.gift_event_id, timestamp,
+                entry_item['id'], entry_item['item_type'], entry_item['item_id'], entry_item['status'],
+                entry_item['total_score'], entry_item['name'], entry_item['thumbnail_url'], entry_item['rank']
+            ))
+        # print(data)
+        cursor.executemany(sql, data)
+        connection.commit()
+        cursor.close()
+        print(f'Fetched and inserted {len(data)} entries.')
 
 
 loader = NicoGiftEventLoader()

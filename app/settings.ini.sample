@@ -7,3 +7,7 @@ aws_region = ap-northeast-1
 s3_bucket = nico-gift-event-graph
 s3_folder = 202206-camp
 save_file_prefix = 202206_camp
+db_host = xxx.rds.amazonaws.com
+db_port = 3306
+db_user = nico_gift_event_graph_user
+db_password = xxx
