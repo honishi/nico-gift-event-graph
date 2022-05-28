@@ -144,7 +144,7 @@ class NicoGiftEventLoader:
             entry_item['partition_key'] = f"{gift_event_id}_{timestamp}_{entry_item['item_id']}"
             entry_item['gift_event_id'] = gift_event_id
             entry_item['timestamp'] = timestamp
-            print(entry_item)
+            # print(entry_item)
             table.put_item(Item=entry_item)
 
 
