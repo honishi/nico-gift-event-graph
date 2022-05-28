@@ -8,6 +8,9 @@ from typing import List
 import mysql.connector
 from flask import render_template, Flask
 
+# https://www.heavy.ai/blog/12-color-palettes-for-telling-better-stories-with-your-data
+CHART_COLORS = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
+
 app = Flask(__name__)
 
 
@@ -32,10 +35,12 @@ class EventSetting:
 class RankUser:
     name: str
     scores: List[int]
+    color: str
 
-    def __init__(self, name: str, scores: List[int]):
+    def __init__(self, name: str, scores: List[int], color: str):
         self.name = name
         self.scores = scores
+        self.color = color
 
 
 class RankingData:
@@ -111,7 +116,7 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
     from ranking
     where gift_event_id = '{setting.gift_event_id}' 
     and timestamp = {latest_timestamp} 
-    order by `rank` asc limit 10
+    order by `rank` asc limit 20
     """
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -140,10 +145,16 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
         history.append((name, scores))
 
     # make data
-    return RankingData(
-        labels,
-        list((RankUser(name, list(reversed(scores))) for name, scores in history)),
-    )
+    users = []
+    for index, (name, scores) in enumerate(history):
+        user = RankUser(
+            name,
+            list(reversed(scores)),
+            CHART_COLORS[index % len(CHART_COLORS)]
+        )
+        users.append(user)
+    return RankingData(labels, users)
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:

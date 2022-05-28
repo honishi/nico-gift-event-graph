@@ -2,33 +2,68 @@
 <html lang="ja">
 <head>
     <meta charset="utf-8">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:100,300,400,500,700,900" rel="stylesheet">
     <title>nico-gift-event-graph</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.8.0/dist/chart.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='index.css') }}" media="screen">
 </head>
 <body>
-<canvas id="main-chart" width="400" height="150"></canvas>
+<h1>⛺ GIFT EVENT 2022/06 "Camp" ⛺️</h1>
+<canvas id="main-chart" width="400" height="200"></canvas>
 <script>
-    const ctx = document.getElementById('main-chart').getContext('2d');
-    const labels = [ {% for label in data.labels %}
-        '{{ label }}',
-    {% endfor %} ];
+    const ctx = document.getElementById('main-chart').getContext('2d')
+    const labels = [{% for label in data.labels %}'{{ label }}', {% endfor %}]
     const data = {
         labels: labels,
-        datasets: [ {% for user in data.top_users %}
+        datasets: [{% for user in data.top_users %}
             {
-            label: '{{ user.name }}',
-            backgroundColor: 'rgb(255, 99, 132)',
-            borderColor: 'rgb(255, 99, 132)',
-            data: {{ user.scores }},
+                label: '{{ user.name }}',
+                backgroundColor: '{{ user.color }}',
+                borderColor: '{{ user.color }}',
+                data: {{ user.scores }},
+            }, {% endfor %}
+        ]
+    }
+    const scales = {
+        yAxes: {
+            title: {
+                display: true,
+                text: '💰 Point',
+                font: {size: 15}
             },
-            {% endfor %} ]
-    };
+        },
+        xAxes: {
+            title: {
+                display: true,
+                text: '⏱ Date time',
+                font: {size: 15}
+            }
+        }
+    }
+    const plugins = {
+        legend: {
+            display: true,
+            position: 'right',
+            labels: {
+                boxHeight: 8,
+                font: {size: 10}
+            }
+        }
+    }
     const config = {
         type: 'line',
         data: data,
-        options: {}
+        options: {
+            scales: scales,
+            plugins: plugins
+        },
+        plugins: []
     };
     const myChart = new Chart(ctx, config);
 </script>
+<div class="footer_section">
+<a href="https://blog.nicovideo.jp/niconews/170253.html" target="_blank">🔗 公式ページ</a>
+</div>
 </body>
 </html>
