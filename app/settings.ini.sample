@@ -1,0 +1,9 @@
+[202206-camp]
+ranking_json_url = https://audition.nicovideo.jp/api/v1/auditions/202206-giftevent-camp/rankings?limit=100
+gift_event_id = 202206_camp
+aws_access_key_id = xxx
+aws_secret_access_key = xxx
+aws_region = ap-northeast-1
+s3_bucket = nico-gift-event-graph
+s3_folder = 202206-camp
+save_file_prefix = 202206_camp
