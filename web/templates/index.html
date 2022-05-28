@@ -9,33 +9,19 @@
 <canvas id="main-chart" width="400" height="150"></canvas>
 <script>
     const ctx = document.getElementById('main-chart').getContext('2d');
-    const labels = [
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-    ];
+    const labels = [ {% for label in data.labels %}
+        '{{ label }}',
+    {% endfor %} ];
     const data = {
         labels: labels,
-        datasets: [{
-            label: 'My First dataset',
+        datasets: [ {% for user in data.top_users %}
+            {
+            label: '{{ user.name }}',
             backgroundColor: 'rgb(255, 99, 132)',
             borderColor: 'rgb(255, 99, 132)',
-            data: [
-                0, 10, 5, 2, 20, 30, 45
-            ],
-        },
-            {
-                label: 'My Second dataset',
-                backgroundColor: 'rgb(255, 99, 132)',
-                borderColor: 'rgb(255, 99, 132)',
-                data: [
-                    10, 10, 5, 2, 20, 30, 45
-                ],
-            }
-        ]
+            data: {{ user.scores }},
+            },
+            {% endfor %} ]
     };
     const config = {
         type: 'line',
