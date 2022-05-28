@@ -50,7 +50,7 @@ class NicoGiftEventLoader:
 
             # 1. Get Ranking Data
             text = NicoGiftEventLoader.get_ranking_json(event_setting.ranking_json_url)
-            print(text)
+            # print(text)
             if text is None:
                 continue
 
