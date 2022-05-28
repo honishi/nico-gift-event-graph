@@ -16,3 +16,8 @@ CREATE TABLE IF NOT EXISTS nico_gift_event_graph_db.ranking
     `rank`          INT           NOT NULL,
     PRIMARY KEY (`gift_event_id`, `timestamp`, `item_id`)
 );
+
+DROP USER 'nico_gift_event_graph_user';
+CREATE USER 'nico_gift_event_graph_user' IDENTIFIED BY 'xxx';
+GRANT ALL PRIVILEGES ON nico_gift_event_graph_db.* TO 'nico_gift_event_graph_user';
+FLUSH PRIVILEGES;
