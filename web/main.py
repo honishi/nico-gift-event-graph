@@ -3,10 +3,11 @@
 import configparser
 import sys
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 import mysql.connector
 from flask import render_template, Flask
+from flask_caching import Cache
 from gevent.pywsgi import WSGIServer
 
 # https://www.heavy.ai/blog/12-color-palettes-for-telling-better-stories-with-your-data
@@ -14,6 +15,8 @@ from gevent.pywsgi import WSGIServer
 CHART_COLORS = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
 
 app = Flask(__name__)
+cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
+cache.init_app(app)
 
 
 class EventSetting:
@@ -49,19 +52,29 @@ class RankingData:
     labels: List[str]
     top_users: List[RankUser]
     data_as_of: str
+    generated_at: datetime
 
-    def __init__(self, labels: List[str], top_users: List[RankUser], data_as_of: str):
+    def __init__(self, labels: List[str], top_users: List[RankUser], data_as_of: str, generated_at: datetime):
         self.labels = labels
         self.top_users = top_users
         self.data_as_of = data_as_of
+        self.generated_at = generated_at
 
 
 @app.route("/")
 def top():
     event_setting = read_event_settings()
-    data = make_ranking_data(event_setting)
-    # print(data)
-    return render_template('index.html', data=data)
+    ranking_data_cache_key = "ranking_data_chache_key"
+    ranking_data: Optional[RankingData] = cache.get(ranking_data_cache_key)
+    if ranking_data is None or (datetime.now() - ranking_data.generated_at).seconds > 60:
+        # print('not cached, or cache is old. make.')
+        ranking_data = make_ranking_data(event_setting)
+        cache.set(ranking_data_cache_key, ranking_data)
+    else:
+        # print('use cache.')
+        pass
+    # print(ranking_data)
+    return render_template('index.html', data=ranking_data)
 
 
 def read_event_settings() -> EventSetting:
@@ -104,7 +117,7 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
         )
         users.append(user)
     data_as_of = datetime.fromtimestamp(latest_timestamp).strftime('%Y/%m/%d %H:%M:%S')
-    return RankingData(labels, users, data_as_of)
+    return RankingData(labels, users, data_as_of, datetime.now())
 
 
 def query_latest_timestamp(cursor, setting: EventSetting) -> int:
