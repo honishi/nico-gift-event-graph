@@ -14,20 +14,20 @@ USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36
 class EventSetting:
     setting_name: str
     ranking_json_url: str
-    s3_iam_access_key_id: str
-    s3_iam_secret_access_key: str
-    s3_region: str
+    aws_access_key_id: str
+    aws_secret_access_key: str
+    aws_region: str
     s3_bucket: str
     s3_folder: str
     save_file_prefix: str
 
-    def __init__(self, setting_name: str, ranking_json_url: str, s3_iam_access_key_id: str,
-                 s3_iam_secret_access_key: str, s3_region: str, s3_bucket: str, s3_folder: str, save_file_prefix: str):
+    def __init__(self, setting_name: str, ranking_json_url: str, aws_access_key_id: str, aws_secret_access_key: str,
+                 aws_region: str, s3_bucket: str, s3_folder: str, save_file_prefix: str):
         self.setting_name = setting_name
         self.ranking_json_url = ranking_json_url
-        self.s3_iam_access_key_id = s3_iam_access_key_id
-        self.s3_iam_secret_access_key = s3_iam_secret_access_key
-        self.s3_region = s3_region
+        self.aws_access_key_id = aws_access_key_id
+        self.aws_secret_access_key = aws_secret_access_key
+        self.aws_region = aws_region
         self.s3_bucket = s3_bucket
         self.s3_folder = s3_folder
         self.save_file_prefix = save_file_prefix
@@ -60,9 +60,9 @@ class NicoGiftEventLoader:
 
             # 3. Configure AWS Session
             NicoGiftEventLoader.set_aws_environmental_values(
-                event_setting.s3_iam_access_key_id,
-                event_setting.s3_iam_secret_access_key,
-                event_setting.s3_region,
+                event_setting.aws_access_key_id,
+                event_setting.aws_secret_access_key,
+                event_setting.aws_region,
             )
 
             # 4. Backup Data to S3
@@ -90,9 +90,9 @@ class NicoGiftEventLoader:
                 EventSetting(
                     section,
                     config.get(section, "ranking_json_url"),
-                    config.get(section, "s3_iam_access_key_id"),
-                    config.get(section, "s3_iam_secret_access_key"),
-                    config.get(section, "s3_region"),
+                    config.get(section, "aws_access_key_id"),
+                    config.get(section, "aws_secret_access_key"),
+                    config.get(section, "aws_region"),
                     config.get(section, "s3_bucket"),
                     config.get(section, "s3_folder"),
                     config.get(section, "save_file_prefix")
@@ -133,9 +133,13 @@ class NicoGiftEventLoader:
     @staticmethod
     def upload_to_dynamodb(json_text: str, timestamp: int):
         dic = json.loads(json_text)
+        # gift_event_id
         for entry_item in dic['data']['entry_items']:
             entry_item['timestamp'] = timestamp
             print(entry_item)
+        dynamodb = boto3.resource('dynamodb')
+        for tbl in dynamodb.tables.all():
+            print(tbl.name)
 
 
 loader = NicoGiftEventLoader()

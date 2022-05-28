@@ -10,6 +10,11 @@
 
 <img src="./images/dynamodb-create.png" alt="">
 
+### AWS IAM Policy
+
+* [Amazon S3: Allows read and write access to objects in an S3 Bucket](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_rw-bucket.html)
+* [Amazon DynamoDB: Allows access to a specific table](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_dynamodb_specific-table.html)
+
 ### Sample JSON
 
 * https://audition.nicovideo.jp/api/v1/auditions/202206-giftevent-camp/rankings?limit=100
