@@ -12,7 +12,14 @@ Configure Python runtime as follows.
 ```shell
 pyenv install
 pip install -r requirements.txt
+
+cd app
+cp settings.ini.sample settings.ini
+vi settings.ini
+# -> configure setting
 ```
+
+Setup database and database scheme using `database/create_db.sql` script.
 
 Schedule the script using scheduler like cron.
 
@@ -25,6 +32,12 @@ Schedule the script using scheduler like cron.
 The chart dataset is dynamically generated from database and visualized by `Chart.js`.
 Web frontend is backed by `Flask`.
 
+```shell
+cd web
+cp settings.ini.sample settings.ini
+vi settings.ini
+# -> configure setting
+```
 ```shell
 cd web
 ./start_production.sh

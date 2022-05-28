@@ -82,7 +82,7 @@ class NicoGiftEventLoader:
                 event_setting
             )
 
-            # 5. Insert Data to DynamoDB
+            # 5. Insert Data to Database
             NicoGiftEventLoader.insert_to_database(
                 text,
                 timestamp,
