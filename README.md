@@ -45,6 +45,8 @@ cd web
 ./start_development.sh
 ```
 
+Now we can access the chart at [http://127.0.0.1:5001/](http://127.0.0.1:5001/), if everything goes well.
+
 ## Reference / Cheatsheet
 
 ### AWS IAM Policy
