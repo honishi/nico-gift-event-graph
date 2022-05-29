@@ -11,7 +11,13 @@ h1 {
 
 .data_as_of_section {
     text-align: center;
+    margin-bottom: 5px;
+}
+
+.top_description_section {
+    text-align: center;
     margin-bottom: 30px;
+    font-size: 0.8em;
 }
 
 a {
@@ -27,5 +33,5 @@ a {
 .footer_section {
     margin-top: 30px;
     text-align: center;
-    font-size: 1.2em;
+    font-size: 1.0em;
 }

@@ -13,6 +13,7 @@ from gevent.pywsgi import WSGIServer
 # https://www.heavy.ai/blog/12-color-palettes-for-telling-better-stories-with-your-data
 
 CHART_COLORS = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
+CACHE_VALID_DURATION_SEC = 60
 
 app = Flask(__name__)
 cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
@@ -66,7 +67,7 @@ def top():
     event_setting = read_event_settings()
     ranking_data_cache_key = "ranking_data_chache_key"
     ranking_data: Optional[RankingData] = cache.get(ranking_data_cache_key)
-    if ranking_data is None or (datetime.now() - ranking_data.generated_at).seconds > 60:
+    if ranking_data is None or (datetime.now() - ranking_data.generated_at).seconds > CACHE_VALID_DURATION_SEC:
         # print('not cached, or cache is old. make.')
         ranking_data = make_ranking_data(event_setting)
         cache.set(ranking_data_cache_key, ranking_data)
@@ -103,13 +104,14 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
 
     # Query database.
     latest_timestamp = query_latest_timestamp(cursor, setting)
-    labels = make_x_labels(cursor, setting)
+    latest_timestamps = query_timestamps(cursor, setting)
     top_users = query_top_users(cursor, setting, latest_timestamp)
-    history = query_score_history(cursor, setting, top_users)
+    score_histories = query_score_histories(cursor, setting, top_users, latest_timestamps)
 
     # Make data.
+    x_labels = reversed(make_x_labels(latest_timestamps))
     users = []
-    for index, (name, scores) in enumerate(history):
+    for index, (name, scores) in enumerate(score_histories):
         user = RankUser(
             f"{index + 1}. {name}",
             list(reversed(scores)),
@@ -117,7 +119,7 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
         )
         users.append(user)
     data_as_of = datetime.fromtimestamp(latest_timestamp).strftime('%Y/%m/%d %H:%M:%S')
-    return RankingData(labels, users, data_as_of, datetime.now())
+    return RankingData(x_labels, users, data_as_of, datetime.now())
 
 
 def query_latest_timestamp(cursor, setting: EventSetting) -> int:
@@ -131,38 +133,40 @@ def query_latest_timestamp(cursor, setting: EventSetting) -> int:
     return row[0]
 
 
-def make_x_labels(cursor, setting: EventSetting) -> List[str]:
+def query_timestamps(cursor, setting: EventSetting) -> List[int]:
     sql = f"""
     select distinct timestamp 
     from ranking 
     where gift_event_id = '{setting.gift_event_id}'
-    order by timestamp asc
+    order by timestamp desc
     """
     cursor.execute(sql)
     rows = cursor.fetchall()
+    timestamps = []
+    for row in rows:
+        timestamps.append(row[0])
+    print(timestamps)
+    return timestamps
+
+
+def make_x_labels(timestamps: List[int]) -> List[str]:
     labels = []
-    # last_date = ''
-    for index, row in enumerate(rows):
-        # if index % 2 != 0:
-        #     labels.append('')
-        #     continue
-        _datetime = datetime.fromtimestamp(row[0])
+    for timestamp in timestamps:
+        _datetime = datetime.fromtimestamp(timestamp)
         date = _datetime.strftime('%m/%d')
         time = _datetime.strftime('%H:%M')
         labels.append(" ".join([date, time]))
-        # labels.append(time if last_date == date else " ".join([date, time]))
-        # last_date = date
-    # print(labels)
+    print(labels)
     return labels
 
 
-def query_top_users(cursor, setting: EventSetting, latest_timestamp: int) -> List[str]:
+def query_top_users(cursor, setting: EventSetting, latest_timestamp: int) -> List:
     sql = f"""
     select item_id, name
     from ranking
     where gift_event_id = '{setting.gift_event_id}' 
     and timestamp = {latest_timestamp} 
-    order by `rank` asc limit 15
+    order by `rank` asc limit 20
     """
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -173,11 +177,12 @@ def query_top_users(cursor, setting: EventSetting, latest_timestamp: int) -> Lis
     return top_users
 
 
-def query_score_history(cursor, setting: EventSetting, user_ids: List[str]) -> List:
-    history = []
-    for user_id, name in user_ids:
+def query_score_histories(cursor, setting: EventSetting, top_users: List[str], latest_timestamps: List[int]) -> List:
+    # print(f"timestamps.len: {len(latest_timestamps)}")
+    histories = []
+    for user_id, name in top_users:
         sql = f"""
-        select total_score 
+        select timestamp, total_score 
         from ranking 
         where gift_event_id = '{setting.gift_event_id}'
         and item_id = '{user_id}'
@@ -185,13 +190,17 @@ def query_score_history(cursor, setting: EventSetting, user_ids: List[str]) -> L
         """
         cursor.execute(sql)
         rows = cursor.fetchall()
+        score_dic = {}
+        for timestamp, total_score in rows:
+            score_dic[timestamp] = total_score
         scores = []
-        for row in rows:
-            scores.append(row[0])
+        for valid_timestamp in latest_timestamps:
+            found_score = score_dic[valid_timestamp]
+            scores.append(found_score if found_score is not None else 0)
         # print(user_id, name)
-        # print(scores)
-        history.append((name, scores))
-    return history
+        # print(len(scores))
+        histories.append((name, scores))
+    return histories
 
 
 if __name__ == "__main__":
