@@ -147,8 +147,8 @@ def make_x_labels(cursor, setting: EventSetting) -> List[str]:
         #     labels.append('')
         #     continue
         _datetime = datetime.fromtimestamp(row[0])
-        date = _datetime.strftime('%Y/%m/%d')
-        time = _datetime.strftime('%H:%M:%S')
+        date = _datetime.strftime('%m/%d')
+        time = _datetime.strftime('%H:%M')
         labels.append(" ".join([date, time]))
         # labels.append(time if last_date == date else " ".join([date, time]))
         # last_date = date
