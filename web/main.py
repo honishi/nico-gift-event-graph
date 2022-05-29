@@ -145,7 +145,7 @@ def query_timestamps(cursor, setting: EventSetting) -> List[int]:
     timestamps = []
     for row in rows:
         timestamps.append(row[0])
-    print(timestamps)
+    # print(timestamps)
     return timestamps
 
 
@@ -156,7 +156,7 @@ def make_x_labels(timestamps: List[int]) -> List[str]:
         date = _datetime.strftime('%m/%d')
         time = _datetime.strftime('%H:%M')
         labels.append(" ".join([date, time]))
-    print(labels)
+    # print(labels)
     return labels
 
 
