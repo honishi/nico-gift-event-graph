@@ -190,13 +190,13 @@ def query_score_histories(cursor, setting: EventSetting, top_users: List[str], l
         """
         cursor.execute(sql)
         rows = cursor.fetchall()
+        # print(f"user_id: {user_id} rows: {len(rows)}")
         score_dic = {}
         for timestamp, total_score in rows:
             score_dic[timestamp] = total_score
         scores = []
         for valid_timestamp in latest_timestamps:
-            found_score = score_dic[valid_timestamp]
-            scores.append(found_score if found_score is not None else 0)
+            scores.append(score_dic[valid_timestamp] if valid_timestamp in score_dic else 0)
         # print(user_id, name)
         # print(len(scores))
         histories.append((name, scores))
