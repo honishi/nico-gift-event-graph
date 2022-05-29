@@ -4,6 +4,7 @@ import configparser
 import datetime
 import json
 import os
+from time import sleep
 from typing import List, Optional
 
 import boto3
@@ -12,6 +13,7 @@ import requests
 
 TMP_DIR = "./tmp"
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
+MAX_FETCH_RETRY_COUNT = 10
 
 
 class EventSetting:
@@ -59,10 +61,18 @@ class NicoGiftEventLoader:
             print(f"{event_setting.ranking_json_url}")
 
             # 1. Get Ranking Data
-            text = NicoGiftEventLoader.get_ranking_json(event_setting.ranking_json_url)
+            retry_count = 0
+            while True:
+                text = NicoGiftEventLoader.get_ranking_json(event_setting.ranking_json_url)
+                if text is not None or retry_count == MAX_FETCH_RETRY_COUNT:
+                    break
+                retry_count += 1
+                print(f"Fetch failed. Retrying... ({retry_count}/{MAX_FETCH_RETRY_COUNT})")
+                sleep(5)
             # print(text)
             if text is None:
-                continue
+                print('Failed to fetch ranking data.')
+                exit()
 
             # 2. Save Data Locally
             filename = f"{event_setting.save_file_prefix}_{date.strftime('%Y%m%d%H%M%S')}_{timestamp}.json"
