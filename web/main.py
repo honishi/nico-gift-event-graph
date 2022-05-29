@@ -166,7 +166,7 @@ def query_top_users(cursor, setting: EventSetting, latest_timestamp: int) -> Lis
     from ranking
     where gift_event_id = '{setting.gift_event_id}' 
     and timestamp = {latest_timestamp} 
-    order by `rank` asc limit 20
+    order by `rank` asc limit 15
     """
     cursor.execute(sql)
     rows = cursor.fetchall()
