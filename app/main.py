@@ -13,7 +13,8 @@ import requests
 
 TMP_DIR = "./tmp"
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
-MAX_FETCH_RETRY_COUNT = 10
+FETCH_RETRY_INTERVAL = 3
+MAX_FETCH_RETRY_COUNT = 100
 
 
 class EventSetting:
@@ -68,7 +69,7 @@ class NicoGiftEventLoader:
                     break
                 retry_count += 1
                 print(f"Fetch failed. Retrying... ({retry_count}/{MAX_FETCH_RETRY_COUNT})")
-                sleep(5)
+                sleep(FETCH_RETRY_INTERVAL)
             # print(text)
             if text is None:
                 print('Failed to fetch ranking data.')
