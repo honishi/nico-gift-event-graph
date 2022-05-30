@@ -11,12 +11,15 @@ from flask_caching import Cache
 from gevent.pywsgi import WSGIServer
 
 # https://www.heavy.ai/blog/12-color-palettes-for-telling-better-stories-with-your-data
-
 CHART_COLORS = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
-CACHE_VALID_DURATION_SEC = 60
 
 app = Flask(__name__)
-cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
+
+# Configure cache for the app.
+cache = Cache(config={
+    'CACHE_TYPE': 'SimpleCache',
+    'CACHE_DEFAULT_TIMEOUT': 60
+})
 cache.init_app(app)
 
 
@@ -65,10 +68,10 @@ class RankingData:
 @app.route("/")
 def top():
     event_setting = read_event_settings()
-    ranking_data_cache_key = "ranking_data_chache_key"
+    ranking_data_cache_key = "ranking_data_cache_key"
     ranking_data: Optional[RankingData] = cache.get(ranking_data_cache_key)
-    if ranking_data is None or (datetime.now() - ranking_data.generated_at).seconds > CACHE_VALID_DURATION_SEC:
-        # print('not cached, or cache is old. make.')
+    if ranking_data is None:
+        # print('not cached, or cache is expired. make.')
         ranking_data = make_ranking_data(event_setting)
         cache.set(ranking_data_cache_key, ranking_data)
     else:
