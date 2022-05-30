@@ -30,15 +30,17 @@ class EventSetting:
     db_port: int
     db_user: str
     db_password: str
+    gtm_container_id: str
 
     def __init__(self, setting_name: str, gift_event_id: str, db_host: str, db_port: int, db_user: str,
-                 db_password: str):
+                 db_password: str, gtm_container_id: str):
         self.setting_name = setting_name
         self.gift_event_id = gift_event_id
         self.db_host = db_host
         self.db_port = db_port
         self.db_user = db_user
         self.db_password = db_password
+        self.gtm_container_id = gtm_container_id
 
 
 class RankUser:
@@ -57,12 +59,15 @@ class RankingData:
     top_users: List[RankUser]
     data_as_of: str
     generated_at: datetime
+    gtm_container_id: str
 
-    def __init__(self, labels: List[str], top_users: List[RankUser], data_as_of: str, generated_at: datetime):
+    def __init__(self, labels: List[str], top_users: List[RankUser], data_as_of: str, generated_at: datetime,
+                 gtm_container_id: str):
         self.labels = labels
         self.top_users = top_users
         self.data_as_of = data_as_of
         self.generated_at = generated_at
+        self.gtm_container_id = gtm_container_id
 
 
 @app.route("/")
@@ -91,7 +96,8 @@ def read_event_settings() -> EventSetting:
         config.get(section, "db_host"),
         int(config.get(section, "db_port")),
         config.get(section, "db_user"),
-        config.get(section, "db_password")
+        config.get(section, "db_password"),
+        config.get(section, "gtm_container_id")
     )
 
 
@@ -112,7 +118,8 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
     score_histories = query_score_histories(cursor, setting, top_users, latest_timestamps)
 
     # Make data.
-    x_labels = reversed(make_x_labels(latest_timestamps))
+    x_labels = make_x_labels(latest_timestamps)
+    x_labels.reverse()
     users = []
     for index, (name, scores) in enumerate(score_histories):
         user = RankUser(
@@ -122,7 +129,7 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
         )
         users.append(user)
     data_as_of = datetime.fromtimestamp(latest_timestamp).strftime('%Y/%m/%d %H:%M:%S')
-    return RankingData(x_labels, users, data_as_of, datetime.now())
+    return RankingData(x_labels, users, data_as_of, datetime.now(), setting.gtm_container_id)
 
 
 def query_latest_timestamp(cursor, setting: EventSetting) -> int:
