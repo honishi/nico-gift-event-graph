@@ -4,10 +4,19 @@
 
 * [https://2525ans.com/gift/](https://2525ans.com/gift/)
 
-## Setup 1. Data Downloader
+## Setup
 
-Fetch raw ranking data json and store it to database.
-Configure Python runtime as follows.
+### 1. Database
+
+Setup database and scheme using the following script.
+
+* `database/create_db.sql`
+
+### 2. Data Downloader
+
+The ranking data json is fetched and stored to database by downloader script.
+
+Configure Python runtime for the script as follows.
 
 ```shell
 pyenv install
@@ -19,17 +28,15 @@ vi settings.ini
 # -> configure setting
 ```
 
-Setup database and database scheme using `database/create_db.sql` script.
-
-Schedule the script using scheduler like cron.
+Then schedule the script using scheduler like cron.
 
 ```
 */10 * * * * /path/to/nico-gift-event-graph/app/run.sh >> /path/to/nico-gift-event-graph/app/log/nico-gift-event-graph.log 2>&1
 ```
 
-## Setup 2. Web Frontend
+### 3. Web Frontend
 
-The chart dataset is dynamically generated from database and visualized by `Chart.js`.
+The chart dataset is dynamically generated from the database and visualized by `Chart.js`.
 Web frontend is backed by `Flask`.
 
 ```shell
@@ -38,6 +45,7 @@ cp settings.ini.sample settings.ini
 vi settings.ini
 # -> configure setting
 ```
+
 ```shell
 cd web
 ./start_production.sh
