@@ -129,7 +129,7 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
             CHART_COLORS[index % len(CHART_COLORS)]
         )
         users.append(user)
-    data_as_of = datetime.fromtimestamp(latest_timestamp).strftime('%Y/%m/%d %H:%M:%S')
+    data_as_of = datetime.fromtimestamp(latest_timestamp).strftime('%Y/%-m/%-d %-H:%M:%S')
     return RankingData(x_labels, users, data_as_of, datetime.now(), setting.gtm_container_id)
 
 
@@ -164,8 +164,8 @@ def make_x_labels(timestamps: List[int]) -> List[str]:
     labels = []
     for timestamp in timestamps:
         _datetime = datetime.fromtimestamp(timestamp)
-        date = _datetime.strftime('%m/%d')
-        time = _datetime.strftime('%H:%M')
+        date = _datetime.strftime('%-m/%-d')
+        time = _datetime.strftime('%-H:%M')
         labels.append(" ".join([date, time]))
     # print(labels)
     return labels
