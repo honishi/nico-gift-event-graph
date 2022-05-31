@@ -122,8 +122,9 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
     x_labels.reverse()
     users = []
     for index, (name, scores) in enumerate(score_histories):
+        medal = '🥇' if index == 0 else '🥈' if index == 1 else '🥉' if index == 2 else ''
         user = RankUser(
-            f"{index + 1}. {name}",
+            f"{index + 1}. {medal}{name}",
             list(reversed(scores)),
             CHART_COLORS[index % len(CHART_COLORS)]
         )
