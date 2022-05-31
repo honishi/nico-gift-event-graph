@@ -33,5 +33,16 @@ a {
 .footer_section {
     margin-top: 30px;
     text-align: center;
-    font-size: 1.0em;
+    font-size: 0.8em;
+    /*background: aqua;*/
+}
+
+.footer_section img {
+    vertical-align: middle;
+    margin-left: 16px;
+    margin-right: 8px;
+}
+
+.footer_section span {
+    vertical-align: middle;
 }
