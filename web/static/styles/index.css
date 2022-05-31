@@ -1,17 +1,34 @@
 body {
     margin: 5% 10%;
     color: #252525;
+    background: #eeeeee;
 }
 
-h1 {
-    font-family: Montserrat, sans-serif;
+.title_section {
     text-align: center;
-    font-size: 2.5em;
+}
+
+.title_section h1 {
+    font-size: 2.0em;
+    font-family: Montserrat, sans-serif;
+}
+
+.title_section h1 img {
+    vertical-align: middle;
+}
+
+.title_section h1 span {
+    vertical-align: middle;
+    margin: 0 8px;
 }
 
 .data_as_of_section {
     text-align: center;
     margin-bottom: 5px;
+}
+
+.data_as_of_section .date {
+    font-weight: 600;
 }
 
 .top_description_section {
@@ -23,8 +40,6 @@ h1 {
 a {
     text-decoration: none;
     color: #303030;
-    /*font-size: 12px;*/
-    /*font-weight: 800;*/
     position: relative;
     -webkit-transition: color ease .2s;
     transition: color ease .2s;
@@ -34,7 +49,6 @@ a {
     margin-top: 30px;
     text-align: center;
     font-size: 0.8em;
-    /*background: aqua;*/
 }
 
 .footer_section img {
