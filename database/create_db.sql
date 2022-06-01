@@ -1,5 +1,11 @@
+--
+-- Create Database.
+--
 CREATE DATABASE IF NOT EXISTS nico_gift_event_graph_db;
 
+--
+-- Create Table.
+--
 CREATE TABLE IF NOT EXISTS nico_gift_event_graph_db.ranking
 (
     /* custom fields: */
@@ -17,6 +23,9 @@ CREATE TABLE IF NOT EXISTS nico_gift_event_graph_db.ranking
     PRIMARY KEY (`gift_event_id`, `timestamp`, `item_id`)
 );
 
+--
+-- Create User.
+--
 DROP USER 'nico_gift_event_graph_user';
 CREATE USER 'nico_gift_event_graph_user' IDENTIFIED BY 'xxx';
 GRANT ALL PRIVILEGES ON nico_gift_event_graph_db.* TO 'nico_gift_event_graph_user';

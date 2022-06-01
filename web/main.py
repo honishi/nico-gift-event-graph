@@ -112,8 +112,8 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
     cursor = connection.cursor()
 
     # Query database.
-    latest_timestamp = query_latest_timestamp(cursor, setting)
     latest_timestamps = query_timestamps(cursor, setting)
+    latest_timestamp = latest_timestamps[0]
     top_users = query_top_users(cursor, setting, latest_timestamp)
     score_histories = query_score_histories(cursor, setting, top_users, latest_timestamps)
 
@@ -131,17 +131,6 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
         users.append(user)
     data_as_of = datetime.fromtimestamp(latest_timestamp).strftime('%Y/%-m/%-d %-H:%M:%S')
     return RankingData(x_labels, users, data_as_of, datetime.now(), setting.gtm_container_id)
-
-
-def query_latest_timestamp(cursor, setting: EventSetting) -> int:
-    sql = f"""
-    select max(timestamp) 
-    from ranking 
-    where gift_event_id = '{setting.gift_event_id}'
-    """
-    cursor.execute(sql)
-    row = cursor.fetchone()
-    return row[0]
 
 
 def query_timestamps(cursor, setting: EventSetting) -> List[int]:
