@@ -21,6 +21,7 @@ class EventSetting:
     setting_name: str
     ranking_json_url: str
     gift_event_id: str
+    gift_event_end_time_jst: datetime
     aws_access_key_id: str
     aws_secret_access_key: str
     aws_region: str
@@ -32,12 +33,13 @@ class EventSetting:
     db_user: str
     db_password: str
 
-    def __init__(self, setting_name: str, ranking_json_url: str, gift_event_id: str, aws_access_key_id: str,
-                 aws_secret_access_key: str, aws_region: str, s3_bucket: str, s3_folder: str, save_file_prefix: str,
-                 db_host: str, db_port: int, db_user: str, db_password: str):
+    def __init__(self, setting_name: str, ranking_json_url: str, gift_event_id: str, gift_event_end_time_jst: datetime,
+                 aws_access_key_id: str, aws_secret_access_key: str, aws_region: str, s3_bucket: str, s3_folder: str,
+                 save_file_prefix: str, db_host: str, db_port: int, db_user: str, db_password: str):
         self.setting_name = setting_name
         self.ranking_json_url = ranking_json_url
         self.gift_event_id = gift_event_id
+        self.gift_event_end_time_jst = gift_event_end_time_jst
         self.aws_access_key_id = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key
         self.aws_region = aws_region
@@ -61,7 +63,12 @@ class NicoGiftEventLoader:
             print(f"*** {date}")
             print(f"{event_setting.ranking_json_url}")
 
-            # 1. Get Ranking Data
+            # 1. Is Event Ongoing?
+            if NicoGiftEventLoader.is_event_ended(event_setting):
+                print(f"The event is ended. ({event_setting.gift_event_end_time_jst})")
+                exit()
+
+            # 2. Get Ranking Data
             retry_count = 0
             while True:
                 text = NicoGiftEventLoader.get_ranking_json(event_setting.ranking_json_url)
@@ -75,7 +82,7 @@ class NicoGiftEventLoader:
                 print('Failed to fetch ranking data.')
                 exit()
 
-            # 2. Save Data Locally
+            # 3. Save Data Locally
             filename = f"{event_setting.save_file_prefix}_{date.strftime('%Y%m%d%H%M%S')}_{timestamp}.json"
             NicoGiftEventLoader.save_ranking_json(
                 text,
@@ -83,17 +90,17 @@ class NicoGiftEventLoader:
                 filename
             )
 
-            # 3. Configure AWS Session
+            # 4. Configure AWS Session
             NicoGiftEventLoader.set_aws_environmental_values(event_setting)
 
-            # 4. Backup Data to S3
+            # 5. Backup Data to S3
             NicoGiftEventLoader.backup_json_to_s3(
                 TMP_DIR,
                 filename,
                 event_setting
             )
 
-            # 5. Insert Data to Database
+            # 6. Insert Data to Database
             NicoGiftEventLoader.insert_to_database(
                 text,
                 timestamp,
@@ -111,6 +118,7 @@ class NicoGiftEventLoader:
                     section,
                     config.get(section, "ranking_json_url"),
                     config.get(section, "gift_event_id"),
+                    datetime.datetime.fromisoformat(config.get(section, "gift_event_end_time_jst")),
                     config.get(section, "aws_access_key_id"),
                     config.get(section, "aws_secret_access_key"),
                     config.get(section, "aws_region"),
@@ -124,6 +132,13 @@ class NicoGiftEventLoader:
                 )
             )
         return event_settings
+
+    @staticmethod
+    def is_event_ended(setting: EventSetting) -> bool:
+        jst = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
+        now = datetime.datetime.now(jst)
+        # print(f"now: {now} end: {setting.gift_event_end_time_jst}")
+        return setting.gift_event_end_time_jst < now
 
     @staticmethod
     def get_ranking_json(url: str) -> Optional[str]:
