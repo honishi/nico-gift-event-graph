@@ -78,6 +78,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             labels: {
                 boxHeight: 8,
                 font: {size: 11}
+            },
+            onClick: function (event, legendItem, legend) {
+                const user_page_urls = [ {% for user in data.top_users %}
+                    "{{ user.user_page_url }}", {% endfor %}
+                ]
+                const url = user_page_urls[legendItem.datasetIndex]
+                window.open(url, '_blank').focus()
+                return false
             }
         }
     }

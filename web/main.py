@@ -12,6 +12,7 @@ from gevent.pywsgi import WSGIServer
 
 # https://www.heavy.ai/blog/12-color-palettes-for-telling-better-stories-with-your-data
 CHART_COLORS = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
+USER_PAGE_URL = 'https://www.nicovideo.jp/user'
 
 app = Flask(__name__)
 
@@ -47,11 +48,13 @@ class RankUser:
     name: str
     scores: List[int]
     color: str
+    user_page_url: str
 
-    def __init__(self, name: str, scores: List[int], color: str):
+    def __init__(self, name: str, scores: List[int], color: str, user_page_url: str):
         self.name = name
         self.scores = scores
         self.color = color
+        self.user_page_url = user_page_url
 
 
 class RankingData:
@@ -121,12 +124,13 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
     x_labels = make_x_labels(latest_timestamps)
     x_labels.reverse()
     users = []
-    for index, (name, scores) in enumerate(score_histories):
+    for index, (user_id, name, scores) in enumerate(score_histories):
         medal = '🥇' if index == 0 else '🥈' if index == 1 else '🥉' if index == 2 else ''
         user = RankUser(
             f"{index + 1}. {medal}{name}",
             list(reversed(scores)),
-            CHART_COLORS[index % len(CHART_COLORS)]
+            CHART_COLORS[index % len(CHART_COLORS)],
+            f"{USER_PAGE_URL}/{user_id}"
         )
         users.append(user)
     data_as_of = datetime.fromtimestamp(latest_timestamp).strftime('%Y/%-m/%-d %-H:%M:%S')
@@ -199,7 +203,7 @@ def query_score_histories(cursor, setting: EventSetting, top_users: List[str], l
             scores.append(score_dic[valid_timestamp] if valid_timestamp in score_dic else 0)
         # print(user_id, name)
         # print(len(scores))
-        histories.append((name, scores))
+        histories.append((user_id, name, scores))
     return histories
 
 
