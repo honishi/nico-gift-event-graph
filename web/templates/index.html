@@ -86,6 +86,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const url = user_page_urls[legendItem.datasetIndex]
                 window.open(url, '_blank').focus()
                 return false
+            },
+            onHover: function (event) {
+                event.native.target.style.cursor = 'pointer'
+            },
+            onLeave: function (event) {
+                event.native.target.style.cursor = 'default'
             }
         }
     }
