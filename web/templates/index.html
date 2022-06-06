@@ -114,8 +114,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     const myChart = new Chart(ctx, config);
 </script>
 <div class="footer_section">
-    <a href="https://blog.nicovideo.jp/niconews/170253.html" target="_blank">
-        <img src="./static/images/logo_niconico.png" width="24"><span>公式ランキング</span></a>
+    {%- if data.event_id == '202206_camp' %}
+        <a href="https://blog.nicovideo.jp/niconews/170253.html" target="_blank">
+    {%- elif data.event_id == 'xxx' %}
+        <a href="https://blog.nicovideo.jp/niconews/170253.html" target="_blank">
+    {%- endif %}
+    <img src="./static/images/logo_niconico.png" width="24"><span>公式ランキング</span></a>
     <a href="https://github.com/honishi/nico-gift-event-graph" target="_blank">
         <img src="./static/images/logo_github.png" width="23"><span>GitHub</span></a>
     <a href="https://twitter.com/d3d7x" target="_blank">
