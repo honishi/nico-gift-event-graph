@@ -4,6 +4,7 @@ import configparser
 import datetime
 import json
 import os
+from dataclasses import dataclass
 from time import sleep
 from typing import List, Optional
 
@@ -17,6 +18,7 @@ FETCH_RETRY_INTERVAL = 3
 MAX_FETCH_RETRY_COUNT = 100
 
 
+@dataclass
 class EventSetting:
     setting_name: str
     ranking_json_url: str
@@ -33,30 +35,13 @@ class EventSetting:
     db_user: str
     db_password: str
 
-    def __init__(self, setting_name: str, ranking_json_url: str, gift_event_id: str, gift_event_end_time_jst: datetime,
-                 aws_access_key_id: str, aws_secret_access_key: str, aws_region: str, s3_bucket: str, s3_folder: str,
-                 save_file_prefix: str, db_host: str, db_port: int, db_user: str, db_password: str):
-        self.setting_name = setting_name
-        self.ranking_json_url = ranking_json_url
-        self.gift_event_id = gift_event_id
-        self.gift_event_end_time_jst = gift_event_end_time_jst
-        self.aws_access_key_id = aws_access_key_id
-        self.aws_secret_access_key = aws_secret_access_key
-        self.aws_region = aws_region
-        self.s3_bucket = s3_bucket
-        self.s3_folder = s3_folder
-        self.save_file_prefix = save_file_prefix
-        self.db_host = db_host
-        self.db_port = db_port
-        self.db_user = db_user
-        self.db_password = db_password
-
 
 class NicoGiftEventLoader:
     def __init__(self):
         self.event_settings = self.read_event_settings()
 
     def start(self):
+        exit()
         for event_setting in self.event_settings:
             date = datetime.datetime.now()
             timestamp = int(date.timestamp())

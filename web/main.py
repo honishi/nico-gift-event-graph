@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import configparser
 import sys
+from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
 
@@ -24,6 +25,7 @@ cache = Cache(config={
 cache.init_app(app)
 
 
+@dataclass
 class EventSetting:
     setting_name: str
     gift_event_id: str
@@ -33,30 +35,16 @@ class EventSetting:
     db_password: str
     gtm_container_id: str
 
-    def __init__(self, setting_name: str, gift_event_id: str, db_host: str, db_port: int, db_user: str,
-                 db_password: str, gtm_container_id: str):
-        self.setting_name = setting_name
-        self.gift_event_id = gift_event_id
-        self.db_host = db_host
-        self.db_port = db_port
-        self.db_user = db_user
-        self.db_password = db_password
-        self.gtm_container_id = gtm_container_id
 
-
+@dataclass
 class RankUser:
     name: str
     scores: List[int]
     color: str
     user_page_url: str
 
-    def __init__(self, name: str, scores: List[int], color: str, user_page_url: str):
-        self.name = name
-        self.scores = scores
-        self.color = color
-        self.user_page_url = user_page_url
 
-
+@dataclass
 class RankingData:
     event_id: str
     labels: List[str]
@@ -64,15 +52,6 @@ class RankingData:
     data_as_of: str
     generated_at: datetime
     gtm_container_id: str
-
-    def __init__(self, event_id: str, labels: List[str], top_users: List[RankUser], data_as_of: str,
-                 generated_at: datetime, gtm_container_id: str):
-        self.event_id = event_id
-        self.labels = labels
-        self.top_users = top_users
-        self.data_as_of = data_as_of
-        self.generated_at = generated_at
-        self.gtm_container_id = gtm_container_id
 
 
 @app.route("/")
