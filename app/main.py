@@ -41,7 +41,6 @@ class NicoGiftEventLoader:
         self.event_settings = self.read_event_settings()
 
     def start(self):
-        exit()
         for event_setting in self.event_settings:
             date = datetime.datetime.now()
             timestamp = int(date.timestamp())
