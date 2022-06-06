@@ -58,14 +58,16 @@ class RankUser:
 
 
 class RankingData:
+    event_id: str
     labels: List[str]
     top_users: List[RankUser]
     data_as_of: str
     generated_at: datetime
     gtm_container_id: str
 
-    def __init__(self, labels: List[str], top_users: List[RankUser], data_as_of: str, generated_at: datetime,
-                 gtm_container_id: str):
+    def __init__(self, event_id: str, labels: List[str], top_users: List[RankUser], data_as_of: str,
+                 generated_at: datetime, gtm_container_id: str):
+        self.event_id = event_id
         self.labels = labels
         self.top_users = top_users
         self.data_as_of = data_as_of
@@ -141,7 +143,13 @@ def make_ranking_data(setting: EventSetting) -> Optional[RankingData]:
         )
         users.append(user)
     data_as_of = datetime.fromtimestamp(latest_timestamp).strftime('%Y/%-m/%-d %-H:%M:%S')
-    return RankingData(x_labels, users, data_as_of, datetime.now(), setting.gtm_container_id)
+    return RankingData(
+        setting.gift_event_id,
+        x_labels,
+        users,
+        data_as_of,
+        datetime.now(),
+        setting.gtm_container_id)
 
 
 def query_timestamps(cursor, setting: EventSetting) -> List[int]:
