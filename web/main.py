@@ -74,13 +74,18 @@ class RankingData:
 
 
 @app.route("/")
-def top():
+@app.route("/<string:gift_event_id>")
+def top(gift_event_id: Optional[str] = None):
     event_setting = read_event_settings()
-    ranking_data_cache_key = "ranking_data_cache_key"
+    if gift_event_id is not None:
+        event_setting.gift_event_id = gift_event_id
+    ranking_data_cache_key = f"ranking_data_cache_key_{event_setting.gift_event_id}"
     ranking_data: Optional[RankingData] = cache.get(ranking_data_cache_key)
     if ranking_data is None:
         # print('not cached, or cache is expired. make.')
         ranking_data = make_ranking_data(event_setting)
+        if ranking_data is None:
+            return f"Failed to make ranking data. ({event_setting.gift_event_id})"
         cache.set(ranking_data_cache_key, ranking_data)
     else:
         # print('use cache.')
@@ -104,7 +109,7 @@ def read_event_settings() -> EventSetting:
     )
 
 
-def make_ranking_data(setting: EventSetting) -> RankingData:
+def make_ranking_data(setting: EventSetting) -> Optional[RankingData]:
     connection = mysql.connector.connect(
         host=setting.db_host,
         port=setting.db_port,
@@ -116,6 +121,8 @@ def make_ranking_data(setting: EventSetting) -> RankingData:
 
     # Query database.
     latest_timestamps = query_timestamps(cursor, setting)
+    if len(latest_timestamps) == 0:
+        return None
     latest_timestamp = latest_timestamps[0]
     top_users = query_top_users(cursor, setting, latest_timestamp)
     score_histories = query_score_histories(cursor, setting, top_users, latest_timestamps)
