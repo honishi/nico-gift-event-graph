@@ -54,9 +54,15 @@ class RankingData:
     gtm_container_id: str
 
 
+@dataclass
+class PageMeta:
+    page_generation_seconds: str
+
+
 @app.route("/")
 @app.route("/<string:gift_event_id>")
 def top(gift_event_id: Optional[str] = None):
+    page_start_time = datetime.now()
     event_setting = read_event_settings()
     if gift_event_id is not None:
         event_setting.gift_event_id = gift_event_id
@@ -72,7 +78,10 @@ def top(gift_event_id: Optional[str] = None):
         # print('use cache.')
         pass
     # print(ranking_data)
-    return render_template('index.html', data=ranking_data)
+    page_end_time = datetime.now()
+    page_duration = (page_end_time - page_start_time).total_seconds()
+    meta = PageMeta(f"{page_duration:.3f}")
+    return render_template('index.html', data=ranking_data, meta=meta)
 
 
 def read_event_settings() -> EventSetting:

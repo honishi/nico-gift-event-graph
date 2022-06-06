@@ -113,7 +113,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     };
     const myChart = new Chart(ctx, config);
 </script>
-<div class="footer_section">
+<div class="link_section">
     {%- if data.event_id == '202206_camp' %}
         <a href="https://blog.nicovideo.jp/niconews/170253.html" target="_blank">
     {%- elif data.event_id == 'xxx' %}
@@ -125,9 +125,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <a href="https://twitter.com/d3d7x" target="_blank">
         <img src="./static/images/logo_twitter.png" width="25"><span>連絡先</span></a>
 </div>
-<div class="footer_section">
+<div class="link_section">
     <a href="./202206_camp">
         <img src="./static/images/202206_camp.png" width="24"><span>2022/6 キャンプ</span></a>
+</div>
+<div class="page_meta_section">
+[ ページ生成時間: {{ meta.page_generation_seconds }} 秒 ]
 </div>
 </body>
 </html>

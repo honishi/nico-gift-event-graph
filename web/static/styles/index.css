@@ -45,18 +45,25 @@ a {
     transition: color ease .2s;
 }
 
-.footer_section {
+.link_section {
     margin-top: 30px;
     text-align: center;
     font-size: 0.8em;
 }
 
-.footer_section img {
+.link_section img {
     vertical-align: middle;
     margin-left: 16px;
     margin-right: 8px;
 }
 
-.footer_section span {
+.link_section span {
     vertical-align: middle;
+}
+
+.page_meta_section {
+    position: absolute;
+    right: 0;
+    padding: 0 32px;
+    font-size: 0.7em;
 }
