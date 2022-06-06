@@ -23,11 +23,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) @formatter:on -->
 <div class="title_section">
     <h1>
-        {% if data.event_id == '202206_camp' %}
+        {%- if data.event_id == '202206_camp' %}
             <img src="./static/images/202206_camp.png" width="48">
             <span>GIFT EVENT 2022/6 "Camp"</span>
             <img src="./static/images/202206_camp.png" width="48">
-        {% endif %}
+        {%- elif data.event_id == 'xxx' %}
+            <img src="./static/images/202206_camp.png" width="48">
+            <span>xxx</span>
+            <img src="./static/images/202206_camp.png" width="48">
+        {%- endif %}
     </h1>
 </div>
 <div class="data_as_of_section">
