@@ -13,23 +13,22 @@ import mysql.connector
 import requests
 
 TMP_DIR = "./tmp"
-USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) " + \
+             "Chrome/96.0.4664.110 Safari/537.36"
 FETCH_RETRY_INTERVAL = 3
 MAX_FETCH_RETRY_COUNT = 100
 
 
 @dataclass
 class EventSetting:
-    setting_name: str
-    ranking_json_url: str
     gift_event_id: str
+    gift_event_begin_time_jst: datetime
     gift_event_end_time_jst: datetime
+    ranking_json_url: str
     aws_access_key_id: str
     aws_secret_access_key: str
     aws_region: str
     s3_bucket: str
-    s3_folder: str
-    save_file_prefix: str
     db_host: str
     db_port: int
     db_user: str
@@ -48,9 +47,10 @@ class NicoGiftEventLoader:
             print(f"{event_setting.ranking_json_url}")
 
             # 1. Is Event Ongoing?
-            if NicoGiftEventLoader.is_event_ended(event_setting):
-                print(f"The event is ended. ({event_setting.gift_event_end_time_jst})")
-                exit()
+            if not NicoGiftEventLoader.is_event_ongoing(event_setting):
+                print(f"The event is not ongoing. "
+                      f"({event_setting.gift_event_begin_time_jst} -> {event_setting.gift_event_end_time_jst})")
+                continue
 
             # 2. Get Ranking Data
             retry_count = 0
@@ -67,7 +67,7 @@ class NicoGiftEventLoader:
                 exit()
 
             # 3. Save Data Locally
-            filename = f"{event_setting.save_file_prefix}_{date.strftime('%Y%m%d%H%M%S')}_{timestamp}.json"
+            filename = f"{event_setting.gift_event_id}_{date.strftime('%Y%m%d%H%M%S')}_{timestamp}.json"
             NicoGiftEventLoader.save_ranking_json(
                 text,
                 TMP_DIR,
@@ -96,33 +96,43 @@ class NicoGiftEventLoader:
         config = configparser.ConfigParser()
         config.read('settings.ini')
         event_settings = []
+        section_common = "common"
+        aws_access_key_id = config.get(section_common, "aws_access_key_id")
+        aws_secret_access_key = config.get(section_common, "aws_secret_access_key")
+        aws_region = config.get(section_common, "aws_region")
+        s3_bucket = config.get(section_common, "s3_bucket")
+        db_host = config.get(section_common, "db_host")
+        db_port = int(config.get(section_common, "db_port"))
+        db_user = config.get(section_common, "db_user")
+        db_password = config.get(section_common, "db_password")
+
         for section in config.sections():
+            if section == section_common:
+                continue
             event_settings.append(
                 EventSetting(
                     section,
-                    config.get(section, "ranking_json_url"),
-                    config.get(section, "gift_event_id"),
+                    datetime.datetime.fromisoformat(config.get(section, "gift_event_begin_time_jst")),
                     datetime.datetime.fromisoformat(config.get(section, "gift_event_end_time_jst")),
-                    config.get(section, "aws_access_key_id"),
-                    config.get(section, "aws_secret_access_key"),
-                    config.get(section, "aws_region"),
-                    config.get(section, "s3_bucket"),
-                    config.get(section, "s3_folder"),
-                    config.get(section, "save_file_prefix"),
-                    config.get(section, "db_host"),
-                    int(config.get(section, "db_port")),
-                    config.get(section, "db_user"),
-                    config.get(section, "db_password"),
+                    config.get(section, "ranking_json_url"),
+                    aws_access_key_id,
+                    aws_secret_access_key,
+                    aws_region,
+                    s3_bucket,
+                    db_host,
+                    db_port,
+                    db_user,
+                    db_password,
                 )
             )
         return event_settings
 
     @staticmethod
-    def is_event_ended(setting: EventSetting) -> bool:
+    def is_event_ongoing(setting: EventSetting) -> bool:
         jst = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
         now = datetime.datetime.now(jst)
         # print(f"now: {now} end: {setting.gift_event_end_time_jst}")
-        return setting.gift_event_end_time_jst < now
+        return setting.gift_event_begin_time_jst < now < setting.gift_event_end_time_jst
 
     @staticmethod
     def get_ranking_json(url: str) -> Optional[str]:
@@ -151,7 +161,7 @@ class NicoGiftEventLoader:
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(setting.s3_bucket)
         local_file = f"{directory}/{filename}"
-        s3_key = f"{setting.s3_folder}/{filename}"
+        s3_key = f"{setting.gift_event_id}/{filename}"
         bucket.upload_file(local_file, s3_key)
 
     @staticmethod
