@@ -43,8 +43,7 @@ class NicoGiftEventLoader:
         for event_setting in self.event_settings:
             date = datetime.datetime.now()
             timestamp = int(date.timestamp())
-            print(f"*** {date}")
-            print(f"{event_setting.ranking_json_url}")
+            print(f"*** {date} [{event_setting.gift_event_id}]")
 
             # 1. Is Event Ongoing?
             if not NicoGiftEventLoader.is_event_ongoing(event_setting):
