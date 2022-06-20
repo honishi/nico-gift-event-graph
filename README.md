@@ -21,8 +21,9 @@ Configure Python runtime for the script as follows.
 ```shell
 pyenv install
 pip install -r requirements.txt
+```
 
-cd app
+```shell
 cp settings.ini.sample settings.ini
 vi settings.ini
 # -> configure setting
@@ -38,13 +39,6 @@ Then schedule the script using scheduler like cron.
 
 The chart dataset is dynamically generated from the database and visualized by `Chart.js`.
 Web frontend is backed by `Flask`.
-
-```shell
-cd web
-cp settings.ini.sample settings.ini
-vi settings.ini
-# -> configure setting
-```
 
 ```shell
 cd web
