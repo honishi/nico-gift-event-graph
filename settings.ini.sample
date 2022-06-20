@@ -1,0 +1,28 @@
+[common]
+aws_access_key_id = xxx
+aws_secret_access_key = xxx
+aws_region = ap-northeast-1
+s3_bucket = nico-gift-event-graph
+db_host = xxx.rds.amazonaws.com
+db_port = 3306
+db_user = nico_gift_event_graph_user
+db_password = xxx
+gtm_container_id = GTM-xxx
+
+[202206-biyoukaden]
+begin_time_jst = 2022-06-20T00:00:00+09:00
+end_time_jst = 2022-06-27T02:01:00+09:00
+ranking_page_url = https://blog.nicovideo.jp/niconews/170970.html
+ranking_json_url = https://audition.nicovideo.jp/api/v1/auditions/202206-giftevent-biyoukaden/rankings?limit=100
+
+[202206-hopstepjump]
+begin_time_jst = 2022-06-11T00:00:00+09:00
+end_time_jst = 2022-06-20T02:01:00+09:00
+ranking_page_url = https://blog.nicovideo.jp/niconews/170822.html
+ranking_json_url = https://audition.nicovideo.jp/api/v1/auditions/202206-hopstepjump/rankings?limit=100
+
+[202206-camp]
+begin_time_jst = 2022-05-27T21:00:00+09:00
+end_time_jst = 2022-06-06T02:01:00+09:00
+ranking_page_url = https://blog.nicovideo.jp/niconews/170253.html
+ranking_json_url = https://audition.nicovideo.jp/api/v1/auditions/202206-giftevent-camp/rankings?limit=100

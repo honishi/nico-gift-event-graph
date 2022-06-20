@@ -3,7 +3,7 @@
 import configparser
 import sys
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
 import mysql.connector
@@ -11,6 +11,7 @@ from flask import render_template, Flask
 from flask_caching import Cache
 from gevent.pywsgi import WSGIServer
 
+SETTINGS_INI = '../settings.ini'
 # https://www.heavy.ai/blog/12-color-palettes-for-telling-better-stories-with-your-data
 CHART_COLORS = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
 USER_PAGE_URL = 'https://www.nicovideo.jp/user'
@@ -27,8 +28,8 @@ cache.init_app(app)
 
 @dataclass
 class EventSetting:
-    setting_name: str
     gift_event_id: str
+    ranking_page_url: str
     db_host: str
     db_port: int
     db_user: str
@@ -52,6 +53,7 @@ class RankingData:
     data_as_of: str
     generated_at: datetime
     gtm_container_id: str
+    ranking_page_url: str
 
 
 @dataclass
@@ -66,6 +68,7 @@ def top(gift_event_id: Optional[str] = None):
     event_setting = read_event_settings()
     if gift_event_id is not None:
         event_setting.gift_event_id = gift_event_id
+        event_setting.ranking_page_url = read_ranking_page_url_setting(gift_event_id)
     ranking_data_cache_key = f"ranking_data_cache_key_{event_setting.gift_event_id}"
     ranking_data: Optional[RankingData] = cache.get(ranking_data_cache_key)
     if ranking_data is None:
@@ -86,17 +89,50 @@ def top(gift_event_id: Optional[str] = None):
 
 def read_event_settings() -> EventSetting:
     config = configparser.ConfigParser()
-    config.read('settings.ini')
-    section = config.sections()[0]
+    config.read(SETTINGS_INI)
+
+    section_common = "common"
+    db_host = config.get(section_common, "db_host")
+    db_port = int(config.get(section_common, "db_port"))
+    db_user = config.get(section_common, "db_user")
+    db_password = config.get(section_common, "db_password")
+    gtm_container_id = config.get(section_common, "gtm_container_id")
+
+    # Scan all sections, and use last ongoing `gift_event_id` in settings.
+    gift_event_id = ""
+    ranking_page_url = ""
+    for section in config.sections():
+        if section == section_common:
+            continue
+        begin = datetime.fromisoformat(config.get(section, "begin_time_jst"))
+        end = datetime.fromisoformat(config.get(section, "end_time_jst"))
+        if not is_event_ongoing(begin, end):
+            continue
+        gift_event_id = section
+        ranking_page_url = config.get(section, "ranking_page_url")
+
     return EventSetting(
-        section,
-        config.get(section, "gift_event_id"),
-        config.get(section, "db_host"),
-        int(config.get(section, "db_port")),
-        config.get(section, "db_user"),
-        config.get(section, "db_password"),
-        config.get(section, "gtm_container_id")
+        gift_event_id,
+        ranking_page_url,
+        db_host,
+        db_port,
+        db_user,
+        db_password,
+        gtm_container_id
     )
+
+
+def read_ranking_page_url_setting(section: str) -> str:
+    config = configparser.ConfigParser()
+    config.read(SETTINGS_INI)
+    return config.get(section, "ranking_page_url")
+
+
+def is_event_ongoing(begin: datetime, end: datetime) -> bool:
+    jst = timezone(timedelta(hours=+9), 'JST')
+    now = datetime.now(jst)
+    # print(f"now: {now} end: {setting.gift_event_end_time_jst}")
+    return begin < now < end
 
 
 def make_ranking_data(setting: EventSetting) -> Optional[RankingData]:
@@ -137,7 +173,9 @@ def make_ranking_data(setting: EventSetting) -> Optional[RankingData]:
         users,
         data_as_of,
         datetime.now(),
-        setting.gtm_container_id)
+        setting.gtm_container_id,
+        setting.ranking_page_url
+    )
 
 
 def query_timestamps(cursor, setting: EventSetting) -> List[int]:

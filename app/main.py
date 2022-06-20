@@ -12,6 +12,7 @@ import boto3
 import mysql.connector
 import requests
 
+SETTINGS_INI = '../settings.ini'
 TMP_DIR = "./tmp"
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) " + \
              "Chrome/96.0.4664.110 Safari/537.36"
@@ -22,8 +23,8 @@ MAX_FETCH_RETRY_COUNT = 100
 @dataclass
 class EventSetting:
     gift_event_id: str
-    gift_event_begin_time_jst: datetime
-    gift_event_end_time_jst: datetime
+    begin_time_jst: datetime
+    end_time_jst: datetime
     ranking_json_url: str
     aws_access_key_id: str
     aws_secret_access_key: str
@@ -47,8 +48,8 @@ class NicoGiftEventLoader:
 
             # 1. Is Event Ongoing?
             if not NicoGiftEventLoader.is_event_ongoing(event_setting):
-                print(f"The event is not ongoing. "
-                      f"({event_setting.gift_event_begin_time_jst} -> {event_setting.gift_event_end_time_jst})")
+                # print(f"The event is not ongoing. "
+                #       f"({event_setting.begin_time_jst} -> {event_setting.end_time_jst})")
                 continue
 
             # 2. Get Ranking Data
@@ -93,7 +94,7 @@ class NicoGiftEventLoader:
     @staticmethod
     def read_event_settings() -> List[EventSetting]:
         config = configparser.ConfigParser()
-        config.read('settings.ini')
+        config.read(SETTINGS_INI)
         event_settings = []
         section_common = "common"
         aws_access_key_id = config.get(section_common, "aws_access_key_id")
@@ -111,8 +112,8 @@ class NicoGiftEventLoader:
             event_settings.append(
                 EventSetting(
                     section,
-                    datetime.datetime.fromisoformat(config.get(section, "gift_event_begin_time_jst")),
-                    datetime.datetime.fromisoformat(config.get(section, "gift_event_end_time_jst")),
+                    datetime.datetime.fromisoformat(config.get(section, "begin_time_jst")),
+                    datetime.datetime.fromisoformat(config.get(section, "end_time_jst")),
                     config.get(section, "ranking_json_url"),
                     aws_access_key_id,
                     aws_secret_access_key,
@@ -131,7 +132,7 @@ class NicoGiftEventLoader:
         jst = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
         now = datetime.datetime.now(jst)
         # print(f"now: {now} end: {setting.gift_event_end_time_jst}")
-        return setting.gift_event_begin_time_jst < now < setting.gift_event_end_time_jst
+        return setting.begin_time_jst < now < setting.end_time_jst
 
     @staticmethod
     def get_ranking_json(url: str) -> Optional[str]:
