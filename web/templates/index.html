@@ -24,19 +24,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="title_section">
     <h1>
         <a href="./">
-            {%- if data.event_id == '202206-biyoukaden' %}
-                <img src="./static/images/202206_biyoukaden.png" width="48">
-                <span>GIFT EVENT 2022/6 "美容家電"</span>
-                <img src="./static/images/202206_biyoukaden.png" width="48">
-            {%- elif data.event_id == '202206-hopstepjump' %}
-                <img src="./static/images/202206_hopstepjump.png" width="48">
-                <span>GIFT EVENT 2022/6 "Hop Step Jump"</span>
-                <img src="./static/images/202206_hopstepjump.png" width="48">
-            {%- elif data.event_id == '202206-camp' %}
-                <img src="./static/images/202206_camp.png" width="48">
-                <span>GIFT EVENT 2022/6 "Camp"</span>
-                <img src="./static/images/202206_camp.png" width="48">
-            {%- endif %}
+            <img src="{{ data.icon }}" width="48">
+            <span>{{ data.title }}</span>
+            <img src="{{ data.icon }}" width="48">
         </a>
     </h1>
 </div>
@@ -128,12 +118,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <img src="./static/images/logo_twitter.png" width="25"><span>連絡先</span></a>
 </div>
 <div class="link_section">
-    <a href="./202206-biyoukaden">
-        <img src="./static/images/202206_biyoukaden.png" width="24"><span>2022/6 美容家電</span></a>
-    <a href="./202206-hopstepjump">
-        <img src="./static/images/202206_hopstepjump.png" width="24"><span>2022/6 ホップ・ステップ・ジャンプ</span></a>
-    <a href="./202206-camp">
-        <img src="./static/images/202206_camp.png" width="24"><span>2022/6 キャンプ</span></a>
+    {%- for event in data.footer_events %}
+        <a href="./{{ event.event_id }}">
+            <img src="{{ event.icon }}" width="24"><span>{{ event.title }}</span></a>
+    {%- endfor %}
 </div>
 <div class="page_meta_section">
     [ ページ生成時間: {{ meta.page_generation_seconds }} 秒 ]

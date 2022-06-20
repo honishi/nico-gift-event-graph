@@ -27,9 +27,20 @@ cache.init_app(app)
 
 
 @dataclass
-class EventSetting:
-    gift_event_id: str
+class Event:
+    event_id: str
+    title: str
+    short_title: str
+    icon: str
+    begin_time_jst: datetime
+    end_time_jst: datetime
     ranking_page_url: str
+
+
+@dataclass
+class EventSetting:
+    event_id: str
+    events: List[Event]
     db_host: str
     db_port: int
     db_user: str
@@ -46,14 +57,24 @@ class RankUser:
 
 
 @dataclass
-class RankingData:
+class FooterEvent:
     event_id: str
+    title: str
+    icon: str
+
+
+@dataclass
+class PageData:
+    event_id: str
+    title: str
+    icon: str
+    ranking_page_url: str
     labels: List[str]
     top_users: List[RankUser]
     data_as_of: str
     generated_at: datetime
+    footer_events: List[FooterEvent]
     gtm_container_id: str
-    ranking_page_url: str
 
 
 @dataclass
@@ -67,16 +88,15 @@ def top(gift_event_id: Optional[str] = None):
     page_start_time = datetime.now()
     event_setting = read_event_settings()
     if gift_event_id is not None:
-        event_setting.gift_event_id = gift_event_id
-        event_setting.ranking_page_url = read_ranking_page_url_setting(gift_event_id)
-    ranking_data_cache_key = f"ranking_data_cache_key_{event_setting.gift_event_id}"
-    ranking_data: Optional[RankingData] = cache.get(ranking_data_cache_key)
-    if ranking_data is None:
+        event_setting.event_id = gift_event_id
+    page_data_cache_key = f"page_data_cache_key_{event_setting.event_id}"
+    page_data: Optional[PageData] = cache.get(page_data_cache_key)
+    if page_data is None:
         # print('not cached, or cache is expired. make.')
-        ranking_data = make_ranking_data(event_setting)
-        if ranking_data is None:
-            return f"Failed to make ranking data. ({event_setting.gift_event_id})"
-        cache.set(ranking_data_cache_key, ranking_data)
+        page_data = make_page_data(event_setting)
+        if page_data is None:
+            return f"Failed to make page data. ({event_setting.event_id})"
+        cache.set(page_data_cache_key, page_data)
     else:
         # print('use cache.')
         pass
@@ -84,7 +104,7 @@ def top(gift_event_id: Optional[str] = None):
     page_end_time = datetime.now()
     page_duration = (page_end_time - page_start_time).total_seconds()
     meta = PageMeta(f"{page_duration:.3f}")
-    return render_template('index.html', data=ranking_data, meta=meta)
+    return render_template('index.html', data=page_data, meta=meta)
 
 
 def read_event_settings() -> EventSetting:
@@ -98,34 +118,34 @@ def read_event_settings() -> EventSetting:
     db_password = config.get(section_common, "db_password")
     gtm_container_id = config.get(section_common, "gtm_container_id")
 
-    # Scan all sections, and use last ongoing `gift_event_id` in settings.
-    gift_event_id = ""
-    ranking_page_url = ""
+    events: List[Event] = []
     for section in config.sections():
         if section == section_common:
             continue
-        begin = datetime.fromisoformat(config.get(section, "begin_time_jst"))
-        end = datetime.fromisoformat(config.get(section, "end_time_jst"))
-        if not is_event_ongoing(begin, end):
-            continue
-        gift_event_id = section
-        ranking_page_url = config.get(section, "ranking_page_url")
+        event = Event(
+            section,
+            config.get(section, "title"),
+            config.get(section, "short_title"),
+            config.get(section, "icon"),
+            datetime.fromisoformat(config.get(section, "begin_time_jst")),
+            datetime.fromisoformat(config.get(section, "end_time_jst")),
+            config.get(section, "ranking_page_url")
+        )
+        events.append(event)
+
+    ongoing_events = list(filter(lambda _event: is_event_ongoing(_event.begin_time_jst, _event.end_time_jst), events))
+    default_event = events[0] if len(ongoing_events) == 0 else ongoing_events[-1]
+    default_gift_event_id = default_event.event_id
 
     return EventSetting(
-        gift_event_id,
-        ranking_page_url,
+        default_gift_event_id,
+        events,
         db_host,
         db_port,
         db_user,
         db_password,
-        gtm_container_id
+        gtm_container_id,
     )
-
-
-def read_ranking_page_url_setting(section: str) -> str:
-    config = configparser.ConfigParser()
-    config.read(SETTINGS_INI)
-    return config.get(section, "ranking_page_url")
 
 
 def is_event_ongoing(begin: datetime, end: datetime) -> bool:
@@ -135,7 +155,7 @@ def is_event_ongoing(begin: datetime, end: datetime) -> bool:
     return begin < now < end
 
 
-def make_ranking_data(setting: EventSetting) -> Optional[RankingData]:
+def make_page_data(setting: EventSetting) -> Optional[PageData]:
     connection = mysql.connector.connect(
         host=setting.db_host,
         port=setting.db_port,
@@ -167,14 +187,19 @@ def make_ranking_data(setting: EventSetting) -> Optional[RankingData]:
         )
         users.append(user)
     data_as_of = datetime.fromtimestamp(latest_timestamp).strftime('%Y/%-m/%-d %-H:%M:%S')
-    return RankingData(
-        setting.gift_event_id,
+    event = list(filter(lambda e: e.event_id == setting.event_id, setting.events))[0]
+    footer_events = list(map(lambda e: FooterEvent(e.event_id, e.short_title, e.icon), setting.events))
+    return PageData(
+        setting.event_id,
+        event.title,
+        event.icon,
+        event.ranking_page_url,
         x_labels,
         users,
         data_as_of,
         datetime.now(),
+        footer_events,
         setting.gtm_container_id,
-        setting.ranking_page_url
     )
 
 
@@ -182,7 +207,7 @@ def query_timestamps(cursor, setting: EventSetting) -> List[int]:
     sql = f"""
     select distinct timestamp 
     from ranking 
-    where gift_event_id = '{setting.gift_event_id}'
+    where gift_event_id = '{setting.event_id}'
     order by timestamp desc
     """
     cursor.execute(sql)
@@ -209,7 +234,7 @@ def query_top_users(cursor, setting: EventSetting, latest_timestamp: int) -> Lis
     sql = f"""
     select item_id, name
     from ranking
-    where gift_event_id = '{setting.gift_event_id}' 
+    where gift_event_id = '{setting.event_id}' 
     and timestamp = {latest_timestamp} 
     order by `rank` asc limit 15
     """
@@ -229,7 +254,7 @@ def query_score_histories(cursor, setting: EventSetting, top_users: List[str], l
         sql = f"""
         select timestamp, total_score 
         from ranking 
-        where gift_event_id = '{setting.gift_event_id}'
+        where gift_event_id = '{setting.event_id}'
         and item_id = '{user_id}'
         order by timestamp desc;
         """
