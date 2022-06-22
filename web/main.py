@@ -94,8 +94,6 @@ def top(gift_event_id: Optional[str] = None):
     if page_data is None:
         # print('not cached, or cache is expired. make.')
         page_data = make_page_data(event_setting)
-        if page_data is None:
-            return f"Failed to make page data. ({event_setting.event_id})"
         cache.set(page_data_cache_key, page_data)
     else:
         # print('use cache.')
@@ -155,7 +153,11 @@ def is_event_ongoing(begin: datetime, end: datetime) -> bool:
     return begin < now < end
 
 
-def make_page_data(setting: EventSetting) -> Optional[PageData]:
+def make_page_data(setting: EventSetting) -> PageData:
+    event = list(filter(lambda e: e.event_id == setting.event_id, setting.events))[0]
+    footer_events = list(map(lambda e: FooterEvent(e.event_id, e.short_title, e.icon), setting.events))
+
+    # Query database.
     connection = mysql.connector.connect(
         host=setting.db_host,
         port=setting.db_port,
@@ -165,10 +167,21 @@ def make_page_data(setting: EventSetting) -> Optional[PageData]:
     )
     cursor = connection.cursor()
 
-    # Query database.
     latest_timestamps = query_timestamps(cursor, setting)
     if len(latest_timestamps) == 0:
-        return None
+        # No data found. Return empty page.
+        return PageData(
+            setting.event_id,
+            event.title,
+            event.icon,
+            event.ranking_page_url,
+            [],
+            [],
+            "No Data",
+            datetime.now(),
+            footer_events,
+            setting.gtm_container_id,
+        )
     latest_timestamp = latest_timestamps[0]
     top_users = query_top_users(cursor, setting, latest_timestamp)
     score_histories = query_score_histories(cursor, setting, top_users, latest_timestamps)
@@ -187,8 +200,6 @@ def make_page_data(setting: EventSetting) -> Optional[PageData]:
         )
         users.append(user)
     data_as_of = datetime.fromtimestamp(latest_timestamp).strftime('%Y/%-m/%-d %-H:%M:%S')
-    event = list(filter(lambda e: e.event_id == setting.event_id, setting.events))[0]
-    footer_events = list(map(lambda e: FooterEvent(e.event_id, e.short_title, e.icon), setting.events))
     return PageData(
         setting.event_id,
         event.title,
