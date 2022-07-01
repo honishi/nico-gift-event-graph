@@ -41,6 +41,7 @@ class NicoGiftEventLoader:
         self.event_settings = self.read_event_settings()
 
     def start(self):
+        print(f"*** {datetime.datetime.now()}")
         for event_setting in self.event_settings:
             # 1. Is Event Ongoing?
             if not NicoGiftEventLoader.is_event_ongoing(event_setting):
@@ -50,7 +51,7 @@ class NicoGiftEventLoader:
 
             date = datetime.datetime.now()
             timestamp = int(date.timestamp())
-            print(f"*** {date} [{event_setting.gift_event_id}]")
+            print(f"{event_setting.gift_event_id}:")
 
             # 2. Get Ranking Data
             retry_count = 0
