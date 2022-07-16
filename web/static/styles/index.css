@@ -46,8 +46,10 @@ a {
 }
 
 .link_section {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     margin-top: 30px;
-    text-align: center;
     font-size: 0.8em;
 }
 
