@@ -15,13 +15,14 @@ SETTINGS_INI = '../settings.ini'
 # https://www.heavy.ai/blog/12-color-palettes-for-telling-better-stories-with-your-data
 CHART_COLORS = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
 USER_PAGE_URL = 'https://www.nicovideo.jp/user'
+CACHE_DEFAULT_TIMEOUT = 60
 
 app = Flask(__name__)
 
 # Configure cache for the app.
 cache = Cache(config={
     'CACHE_TYPE': 'SimpleCache',
-    'CACHE_DEFAULT_TIMEOUT': 60
+    'CACHE_DEFAULT_TIMEOUT': CACHE_DEFAULT_TIMEOUT
 })
 cache.init_app(app)
 
@@ -93,8 +94,15 @@ def top(gift_event_id: Optional[str] = None):
     page_data: Optional[PageData] = cache.get(page_data_cache_key)
     if page_data is None:
         # print('not cached, or cache is expired. make.')
+        event_list: [Event] = [event for event in event_setting.events if event.event_id == event_setting.event_id]
+        # print(event_list)
+        if not event_list:
+            return "Invalid gift event id."
         page_data = make_page_data(event_setting)
-        cache.set(page_data_cache_key, page_data)
+        event = event_list[0]
+        timeout = 0 if is_event_ended(event.end_time_jst) else CACHE_DEFAULT_TIMEOUT
+        # print(f'timeout: {timeout}')
+        cache.set(page_data_cache_key, page_data, timeout=timeout)
     else:
         # print('use cache.')
         pass
@@ -151,6 +159,12 @@ def is_event_ongoing(begin: datetime, end: datetime) -> bool:
     now = datetime.now(jst)
     # print(f"now: {now} end: {setting.gift_event_end_time_jst}")
     return begin < now < end
+
+
+def is_event_ended(end: datetime) -> bool:
+    jst = timezone(timedelta(hours=+9), 'JST')
+    now = datetime.now(jst)
+    return end < now
 
 
 def make_page_data(setting: EventSetting) -> PageData:
